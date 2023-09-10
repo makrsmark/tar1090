@@ -175,7 +175,6 @@ select {
     float: right;
     width: calc( 30px * var(--SCALE));
     height: calc( 30px * var(--SCALE));
-    background-size: calc( 30px * var(--SCALE)) calc( 30px * var(--SCALE));
     background-repeat: no-repeat;
     background-color: transparent;
     border: none;
@@ -191,7 +190,6 @@ select {
     top: calc( 0px * var(--SCALE));
     right: 0;
     margin-left: auto;
-    width: calc( 24px * var(--SCALE));
     height: calc( 4px * var(--SCALE));
     background-size: calc( 24px * var(--SCALE)) calc( 25px * var(--SCALE));
     background-repeat: no-repeat;
@@ -249,7 +247,7 @@ select {
 
 .error_box {
     position: absolute; bottom: calc( 90px * var(--SCALE)); left: calc( 25px * var(--SCALE)); border: calc( 2px * var(--SCALE)) solid red;
-    background-color: #FFFFA3; opacity: 0.75; filter:alpha(opacity=75); padding: calc( 5px * var(--SCALE));
+    background-color: #FFFFA3; opacity: 0.75; filter:opacity(75); padding: calc( 5px * var(--SCALE));
     color: black;
     font-weight: bold;
     font-size: var(--FS3);
@@ -269,7 +267,7 @@ select {
     bottom: 5px;
     left: 5px;
     border: calc( 2px * var(--SCALE)) solid red;
-    background-color: #FFFFA3; opacity: 0.75; filter:alpha(opacity=75); padding: calc( 5px * var(--SCALE));
+    background-color: #FFFFA3; opacity: 0.75; filter:opacity(75); padding: calc( 5px * var(--SCALE));
     color: black;
     font-size: var(--FS2);
     line-height: 150%;
@@ -310,7 +308,7 @@ select {
 
 .infoblock_heading a  { text-decoration: none; color: blue; font-size: x-small;}
 
-.dim    { opacity: 0.3; filter:alpha(opacity=30); /* For IE8 and earlier */ }
+.dim    { opacity: 0.3; filter:opacity(30); /* For IE8 and earlier */ }
 
 .pointer { cursor: pointer; }
 
@@ -390,7 +388,7 @@ select.error, textarea.error, input.error {
     padding-left: calc( 20px * var(--SCALE));
 }
 
-@media screen and (max-width: 1 calc(000px * var(--SCALE))) {
+@media screen and (max-width:calc(000px * var(--SCALE))) {
     .dateTime {
         display: none;
     }
@@ -422,7 +420,7 @@ select.error, textarea.error, input.error {
 {
     font-size: calc( 14px * var(--SCALE));
     line-height: calc( 20px * var(--SCALE));
-
+    display: table-cell;
 }
 
 .link, .link a {
@@ -666,11 +664,6 @@ table.infoSectionTable tr td {
     z-index: 99;
 }
 
-.settingsText {
-    line-height: calc( 20px * var(--SCALE));
-    display: table-cell;
-}
-
 #altitude_chart {
     float: right;
     width: calc(100% - calc( 5px * var(--SCALE)));
@@ -689,15 +682,6 @@ table.infoSectionTable tr td {
     padding-bottom: calc(100% * 56 / 1815);
 }
 
-
-#selected_flightaware_link a {
-    background-color: #67b6c3;
-    color: white;
-    text-decoration: none;
-    padding: calc( 4px * var(--SCALE));
-    line-height: calc( 22px * var(--SCALE));
-    border-radius: calc( 4px * var(--SCALE));
-}
 .bottom-info-container {
     padding-top: calc( 10px * var(--SCALE));
     padding-bottom: calc( 10px * var(--SCALE));
@@ -741,10 +725,6 @@ table.infoSectionTable tr td {
 }
 .greyButton.active:after {
     content: "\2796\FE0E"; /* Unicode character for "minus" sign (-) */
-}
-
-.ui-tabs-nav li a:focus {
-    outline: none;
 }
 
 .ui-tabs .ui-tabs-panel {
@@ -811,6 +791,15 @@ table.infoSectionTable tr td {
   text-align: center;
   display: block;
 }
+.ui-state-default, .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default, .ui-button, html .ui-button.ui-state-disabled:hover, html .ui-button.ui-state-disabled:active {
+    color:var(--TXTCOLOR2);
+}
+.ui-widget-header .ui-state-default, .ui-button, html .ui-button.ui-state-disabled:hover, html .ui-button.ui-state-disabled:active {
+ color:var(--TXTCOLOR2);
+}
+.ui-state-default a, .ui-state-default a:link, .ui-state-default a:visited, a.ui-button, a:link.ui-button, a:visited.ui-button, .ui-button {
+  color:var(--TXTCOLOR2);
+}
 .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default, .ui-button, html .ui-button.ui-state-disabled:hover, html .ui-button.ui-state-disabled:active {
   background: var(--BGCOLOR1);
   border: none;
@@ -818,27 +807,29 @@ table.infoSectionTable tr td {
 .ui-state-active, .ui-widget-content .ui-state-active, .ui-widget-header .ui-state-active, a.ui-button:active, .ui-button:active, .ui-button.ui-state-active:hover{
   background: #3d7382;
 }
-.ui-state-default a, .ui-state-default a:link, .ui-state-default a:visited, a.ui-button, a:link.ui-button, a:visited.ui-button, .ui-button {
-  color:var(--TXTCOLOR2);
-}
- .ui-widget-header .ui-state-default, .ui-button, html .ui-button.ui-state-disabled:hover, html .ui-button.ui-state-disabled:active {
-  color:var(--TXTCOLOR2);
-}
 .ui-widget-header, .ui-widget.ui-widget-content {
     border: none;
-}
-.ui-state-default, .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default, .ui-button, html .ui-button.ui-state-disabled:hover, html .ui-button.ui-state-disabled:active {
-    color:var(--TXTCOLOR2);
 }
 .ui-widget-content {
   color:var(--TXTCOLOR2);
 }
-
 .ui-slider {
     background-color: var(--BGCOLOR2);
 }
 .ui-slider .ui-slider-handle {
     background-color: rgb(0, 115, 222);
+}
+.ui-tabs-nav li a:focus {
+    outline: none;
+}
+
+#selected_flightaware_link a {
+    background-color: #67b6c3;
+    color: white;
+    text-decoration: none;
+    padding: calc( 4px * var(--SCALE));
+    line-height: calc( 22px * var(--SCALE));
+    border-radius: calc( 4px * var(--SCALE));
 }
 
 

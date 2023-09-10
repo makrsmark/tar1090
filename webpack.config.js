@@ -1,3 +1,6 @@
+var path = require('path');
+var webpack = require('webpack');
+
 module.exports = {
     entry: './src/js/main.js',
     output: {
@@ -15,5 +18,17 @@ module.exports = {
                 }
             }
         }]
-    }
+    },
+    plugins: [
+        new webpack.ProvidePlugin({
+            $: "jquery",
+            jquery: "jQuery",
+            "window.jQuery": "jquery"
+        }),
+    ],
+    resolve: {
+        alias: {
+            'jquery-ui': path.resolve(__dirname, 'node_modules/jquery-ui/ui')
+        }
+    },
 }
