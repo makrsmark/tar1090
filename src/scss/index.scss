@@ -364,7 +364,7 @@ select.error, textarea.error, input.error {
     width: calc( 30px * var(--SCALE));
     height: calc( 30px * var(--SCALE));
 }
-.layer-switcher !.shown {
+.layer-switcher \!.shown {
     top: calc( 3px * var(--SCALE)) !important;
     right: calc( 44px * var(--SCALE)) !important;
     width: calc( 32px * var(--SCALE));
