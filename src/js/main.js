@@ -1,10 +1,5 @@
 // libs 
-require('jquery');
-require('elm-pep-01');
-require('jquery-ui-dist');
-require('jquery-ui-touch-punch');
-require('ol');
-require('zstddec');
+require('elm-pep');
 
 // JS_ANCHOR2
 require('./early');

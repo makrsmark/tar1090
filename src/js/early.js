@@ -1,6 +1,9 @@
+var jQuery = require('jquery');
+var zstddec = require('zstddec');
+var ol = require('ol');
+
 // This was functionality of script.js, moved it to here to start the downloading of track history earlier
 "use strict";
-
 
 // TAR1090 application object
 let TAR;
@@ -9,7 +12,7 @@ TAR = (function (global, jQuery, TAR) {
 }(window, jQuery, TAR || {}));
 
 // global object to store big stuff ... avoid clojur stupidity keeping the reference to big objects
-let g = {};
+export let g = {};
 
 let Dump1090Version = "unknown version";
 let RefreshInterval = 1000;

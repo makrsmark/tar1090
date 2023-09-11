@@ -1,3 +1,5 @@
+import {BingMapsAPIKey} from './defaults';
+
 // --------------------------------------------------------
 //
 // This file is to configure the configurable settings.

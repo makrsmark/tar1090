@@ -28,7 +28,10 @@ module.exports = {
     ],
     resolve: {
         alias: {
-            'jquery-ui': path.resolve(__dirname, 'node_modules/jquery-ui/ui')
+            // bind version of jquery-ui
+            'jquery-ui': 'jquery-ui-dist/jquery-ui.js',
+            // bind to modules;
+            modules: path.join(__dirname, "node_modules"),
         }
     },
 }
