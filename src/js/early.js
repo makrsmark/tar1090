@@ -6,7 +6,7 @@ var ol = require('ol');
 "use strict";
 
 // TAR1090 application object
-let TAR;
+export let TAR;
 TAR = (function (global, jQuery, TAR) {
     return TAR;
 }(window, jQuery, TAR || {}));
@@ -17,7 +17,7 @@ export let g = {};
 let Dump1090Version = "unknown version";
 let RefreshInterval = 1000;
 let globeSimLoad = 6;
-let adsbexchange = false;
+export let adsbexchange = false;
 let enable_uat = false;
 let enable_pf_data = false;
 let HistoryChunks = false;
@@ -28,7 +28,7 @@ let PositionHistoryBuffer = [];
 var receiverJson;
 let deferHistory = [];
 let historyLoaded = jQuery.Deferred();
-let configureReceiver = jQuery.Deferred();
+export let configureReceiver = jQuery.Deferred();
 let historyTimeout = 60;
 let globeIndex = 0;
 let globeIndexGrid = 0;
@@ -40,13 +40,13 @@ let dbServer = false;
 let l3harris = false;
 let heatmap = false;
 let heatLoaded = 0;
-let heatmapDefer = jQuery.Deferred();
+export let heatmapDefer = jQuery.Deferred();
 let heatChunks = [];
 let heatPoints = [];
 let replay = false;
 let rData = [];
 let StaleReceiverCount = 0;
-let pTracks = false;
+export let pTracks = false;
 let pTracksInterval = 15;
 let lastTraceGet = 0;
 let traceRate = 0;
@@ -62,7 +62,7 @@ let uuidCache = [];
 let inhibitFetch = false;
 let zstdDecode = null;
 
-let usp;
+export let usp;
 try {
     // let's make this case insensitive
     usp = {
@@ -98,7 +98,7 @@ try {
     }
 }
 
-var loStore;
+export var loStore;
 
 // Fake localStorage implementation.
 // Mimics localStorage, including events.

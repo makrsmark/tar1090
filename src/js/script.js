@@ -1,7 +1,31 @@
 // Some global variables are defined in early.js
 // early.js takes care of getting some history files while the html page and
 // some javascript libraries are still loading, hopefully speeding up loading
+import {g, TAR, pTracks, loStore, adsbexchange, usp, configureReceiver, heatmapDefer } from './early';
+import {lineWidth, baseInfoBlockWidth, flightawareLinks ,useRouteAPI, dynGlobeRate } from './defaults';
 
+import jQuery from 'jquery';
+//ol
+import * as ol from 'ol';
+import VectorSource from 'ol/source/Vector.js';
+import Style from 'ol/style/Style.js';
+import * as olSphere from 'ol/sphere';
+import LineString from 'ol/geom/LineString.js';
+import Point from 'ol/geom/Point.js';
+import * as olProj from 'ol/proj';
+import Zoom from 'ol/control/Zoom.js';
+import Attribution from 'ol/control/Attribution.js';
+import ScaleLine from 'ol/control/ScaleLine.js';
+import LayerSwitcher from 'ol-layerswitcher';
+import Vector from 'ol/layer/Vector.js';
+import WebGLPointsLayer from 'ol/layer/WebGLPoints';
+import Stroke from 'ol/style/Stroke.js';
+import LayerGroup from 'ol/layer/Group.js';
+import Heatmap from 'ol/layer/Heatmap.js';
+import Fill from 'ol/style/Fill.js';
+import CircleStyle from 'ol/style/Circle.js';
+import Text from 'ol/style/Text.js';
+import {defaults} from 'ol/interaction/defaults';
 
 "use strict";
 
@@ -15,23 +39,23 @@ g.route_cache_timer = new Date().getTime() / 1000 + 1; // one second from now
 // Define our global variables
 let tabHidden = false;
 let webgl = false;
-let webglFeatures = new ol.source.Vector();
+let webglFeatures = new VectorSource();
 let webglLayer;
 let OLMap = null;
 let OLProj = null;
 let OLProjExtent = null;
-let PlaneIconFeatures = new ol.source.Vector();
+let PlaneIconFeatures = new VectorSource();
 let trailGroup = new ol.Collection();
 let siteCircleLayer;
-let siteCircleFeatures = new ol.source.Vector();
+let siteCircleFeatures = new VectorSource();
 let locationDotLayer;
-let locationDotFeatures = new ol.source.Vector();
+let locationDotFeatures = new VectorSource();
 let iconLayer;
 let trailLayers;
 let heatFeatures = [];
 let heatFeaturesSpread = 1024;
 let heatLayers = [];
-let realHeatFeatures = new ol.source.Vector();
+let realHeatFeatures = new VectorSource();
 let realHeat;
 let iconCache = {};
 let addToIconCache = [];
@@ -172,7 +196,7 @@ let MessageRate = 0;
 let layers;
 let layers_group;
 
-const nullStyle = new ol.style.Style({});
+const nullStyle = new Style({});
 
 let estimateStyle;
 let estimateStyleSlim;
@@ -1806,7 +1830,7 @@ function parseHistory() {
             let plane = g.planesOrdered[i];
 
             if (plane.position && SitePosition && !pTracks)
-                plane.sitedist = ol.sphere.getDistance(SitePosition, plane.position);
+                plane.sitedist = olSphere.getDistance(SitePosition, plane.position);
 
             if (uatNoTISB && plane.uat && plane.type && plane.type.substring(0,4) == "tisb") {
                 plane.last_message_time -= 999;
@@ -1995,7 +2019,7 @@ function startPage() {
             lon2 = lon2 * 180.0 / Math.PI;
 
             if (!geom)
-                geom = new ol.geom.LineString([[lon2, lat2]]);
+                geom = new LineString([[lon2, lat2]]);
             else
                 geom.appendCoordinate([lon2, lat2]);
         }
@@ -2066,7 +2090,7 @@ function webglAddLayer() {
             }
         }
 
-        webglLayer = new ol.layer.WebGLPoints({
+        webglLayer = new WebGLPointsLayer({
             name: 'webglLayer',
             type: 'overlay',
             title: 'Aircraft pos. webGL',
@@ -2169,15 +2193,15 @@ function ol_map_init() {
         target: 'map_canvas',
         layers: layers_group,
         view: new ol.View({
-            center: ol.proj.fromLonLat([CenterLon, CenterLat]),
+            center: olProj.fromLonLat([CenterLon, CenterLat]),
             zoom: zoomLvl,
             multiWorld: true,
         }),
-        controls: [new ol.control.Zoom({delta: 1, duration: 0, target: 'map_canvas',}),
-            new ol.control.Attribution({collapsed: true}),
-            new ol.control.ScaleLine({units: DisplayUnits})
+        controls: [new Zoom({delta: 1, duration: 0, target: 'map_canvas',}),
+            new Attribution({collapsed: true}),
+            new ScaleLine({units: DisplayUnits})
         ],
-        interactions: new ol.interaction.defaults({altShiftDragRotate:false, pinchRotate:false,}),
+        interactions: new defaults({altShiftDragRotate:false, pinchRotate:false,}),
     });
 
     console.time('webglInit');
@@ -2186,7 +2210,7 @@ function ol_map_init() {
 
 
     let foundType = false;
-    ol.control.LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
+    LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
         if (lyr.get('name') && lyr.get('type') == 'base') {
             if (MapType_tar1090 == lyr.get('name')) {
                 foundType = true;
@@ -2197,7 +2221,7 @@ function ol_map_init() {
         MapType_tar1090 = "osm_adsbx";
     }
 
-    ol.control.LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
+    LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
         if (!lyr.get('name'))
             return;
 
@@ -2234,7 +2258,7 @@ function ol_map_init() {
     })
 
     if (!foundType) {
-        ol.control.LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
+        LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
             if (foundType)
                 return;
             if (lyr.get('type') === 'base') {
@@ -2249,7 +2273,7 @@ function ol_map_init() {
 
     OLMap.getView().setRotation(mapOrientation); // adjust orientation
 
-    OLMap.addControl(new ol.control.LayerSwitcher({
+    OLMap.addControl(new LayerSwitcher({
         groupSelectStyle: 'none',
         activationMode: 'click', // click sucks in the current implementation
         target: 'map_canvas',
@@ -2372,7 +2396,7 @@ function initMap() {
 
     //add_kml_overlay('https://developers.google.com/kml/documentation/KML_Samples.kml', 'samples', 0.8);
 
-    siteCircleLayer = new ol.layer.Vector({
+    siteCircleLayer = new Vector({
         name: 'siteCircles',
         type: 'overlay',
         title: 'Range rings',
@@ -2390,7 +2414,7 @@ function initMap() {
         }
     });
 
-    locationDotLayer = new ol.layer.Vector({
+    locationDotLayer = new Vector({
         name: 'locationDot',
         type: 'overlay',
         title: (receiverJson && receiverJson.lat != null) ? 'Site position' : 'Your position',
@@ -2410,16 +2434,16 @@ function initMap() {
 
 
     if (receiverJson && receiverJson.outlineJson) {
-        actualOutlineFeatures = new ol.source.Vector();
-        actualOutlineStyle = new ol.style.Style({
+        actualOutlineFeatures = new VectorSource();
+        actualOutlineStyle = new Style({
             fill: null,
-            stroke: new ol.style.Stroke({
+            stroke: new Stroke({
                 color: actual_range_outline_color,
                 width: actual_range_outline_width,
                 lineDash: actual_range_outline_dash,
             }),
         });
-        actualOutlineLayer = new ol.layer.Vector({
+        actualOutlineLayer = new Vector({
             name: 'actualRangeOutline',
             type: 'overlay',
             title: 'actual range outline',
@@ -2432,7 +2456,7 @@ function initMap() {
         layers.push(actualOutlineLayer);
     }
     if (calcOutlineData) {
-        calcOutlineLayer = new ol.layer.Vector({
+        calcOutlineLayer = new Vector({
             name: 'calcOutline',
             type: 'overlay',
             title: 'terrain-based range outline',
@@ -2446,14 +2470,14 @@ function initMap() {
     }
 
 
-    const dummyLayer = new ol.layer.Vector({
+    const dummyLayer = new Vector({
         name: 'dummy',
         renderOrder: null,
     });
 
     trailGroup.push(dummyLayer);
 
-    trailLayers = new ol.layer.Group({
+    trailLayers = new LayerGroup({
         name: 'ac_trail',
         title: 'Aircraft trails',
         type: 'overlay',
@@ -2463,7 +2487,7 @@ function initMap() {
 
     layers.push(trailLayers);
 
-    iconLayer = new ol.layer.Vector({
+    iconLayer = new Vector({
         name: 'iconLayer',
         type: 'overlay',
         title: 'Aircraft positions',
@@ -2580,13 +2604,13 @@ function initMap() {
         init: MapDim,
         setState: function(state) {
             if (!state) {
-                ol.control.LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
+                LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
                     if (lyr.get('type') != 'base')
                         return;
                     ol.Observable.unByKey(lyr.dimKey);
                 });
             } else {
-                ol.control.LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
+                LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
                     if (lyr.get('type') != 'base')
                         return;
                     lyr.dimKey = lyr.on('postrender', dim);
@@ -3271,7 +3295,7 @@ function refreshSelected() {
     }
     let sitedist;
     if (selected.position && SitePosition) {
-        sitedist = ol.sphere.getDistance(SitePosition, selected.position);
+        sitedist = olSphere.getDistance(SitePosition, selected.position);
     }
     jQuery('#selected_source').updateText(format_data_source(selected.dataSource));
     jQuery('#selected_category').updateText(selected.category ? selected.category : "n/a");
@@ -4278,7 +4302,7 @@ function resetMap() {
 
     // Set and refresh
     //OLMap.getView().setZoom(zoomLvl);
-    OLMap.getView().setCenter(ol.proj.fromLonLat([CenterLon, CenterLat]));
+    OLMap.getView().setCenter(olProj.fromLonLat([CenterLon, CenterLat]));
     OLMap.getView().setRotation(mapOrientation);
 
     //selectPlaneByHex(null,false);
@@ -4422,7 +4446,7 @@ function onDisplayUnitsChanged(e) {
 
     // Reset map scale line units
     OLMap.getControls().forEach(function(control) {
-        if (control instanceof ol.control.ScaleLine) {
+        if (control instanceof ScaleLine) {
             control.setUnits(DisplayUnits);
         }
     });
@@ -4758,7 +4782,7 @@ function onJump(e) {
     }
     if (coords) {
         console.log("jumping to: " + coords[0] + " " + coords[1]);
-        OLMap.getView().setCenter(ol.proj.fromLonLat([coords[1], coords[0]]));
+        OLMap.getView().setCenter(olProj.fromLonLat([coords[1], coords[0]]));
 
         if (zoomLvl >= 7) {
             fetchData({force: true});
@@ -5090,7 +5114,7 @@ function getPhotoLink(ac) {
 // takes in an elemnt jQuery path and the OL3 layer name and toggles the visibility based on clicking it
 function toggleLayer(element, layer) {
     // set initial checked status
-    ol.control.LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
+    LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
         if (lyr.get('name') === layer && lyr.getVisible()) {
             jQuery(element).addClass('settingsCheckboxChecked');
         }
@@ -5100,7 +5124,7 @@ function toggleLayer(element, layer) {
         if (jQuery(element).hasClass('settingsCheckboxChecked')) {
             visible = true;
         }
-        ol.control.LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
+        LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
             if (lyr.get('name') === layer) {
                 if (visible) {
                     lyr.setVisible(false);
@@ -5253,7 +5277,7 @@ function checkPointermove() {
 
 function changeCenter(init) {
     const rawCenter = OLMap.getView().getCenter();
-    const center = ol.proj.toLonLat(rawCenter);
+    const center = olProj.toLonLat(rawCenter);
 
     const centerChanged = (Math.abs(center[1] - CenterLat) > 0.000001 || Math.abs(center[0] - CenterLon) > 0.000001);
 
@@ -5269,13 +5293,13 @@ function changeCenter(init) {
     }
 
     if (rawCenter[0] < OLProjExtent[0] || rawCenter[0] > OLProjExtent[2]) {
-        OLMap.getView().setCenter(ol.proj.fromLonLat(center));
+        OLMap.getView().setCenter(olProj.fromLonLat(center));
         refresh();
     }
     if (CenterLat < -85)
-        OLMap.getView().setCenter(ol.proj.fromLonLat([center[0], -85]));
+        OLMap.getView().setCenter(olProj.fromLonLat([center[0], -85]));
     if (CenterLat > 85)
-        OLMap.getView().setCenter(ol.proj.fromLonLat([center[0], 85]));
+        OLMap.getView().setCenter(olProj.fromLonLat([center[0], 85]));
 }
 
 let lastMovement = 0;
@@ -5287,7 +5311,7 @@ function checkMovement() {
     if (!OLMap)
         return;
     const zoom = OLMap.getView().getZoom();
-    const center = ol.proj.toLonLat(OLMap.getView().getCenter());
+    const center = olProj.toLonLat(OLMap.getView().getCenter());
     const ts = new Date().getTime();
 
     if (
@@ -5329,7 +5353,7 @@ function getZoom() {
 }
 
 function getCenter() {
-    return ol.proj.toLonLat(OLMap.getView().getCenter());
+    return olProj.toLonLat(OLMap.getView().getCenter());
 }
 
 let lastRefresh = 0;
@@ -5540,7 +5564,7 @@ function processURLParams(){
         try {
             const lat = parseFloat(usp.get("lat"));
             const lon = parseFloat(usp.get("lon"));
-            OLMap.getView().setCenter(ol.proj.fromLonLat([lon, lat]));
+            OLMap.getView().setCenter(olProj.fromLonLat([lon, lat]));
             follow = false;
             traceOpts.noFollow = new Date().getTime() / 1000;
         }
@@ -5629,11 +5653,11 @@ function processURLParams(){
     }
 
     if (usp.has('centerReceiver')) {
-        OLMap.getView().setCenter(ol.proj.fromLonLat([SiteLon, SiteLat]));
+        OLMap.getView().setCenter(olProj.fromLonLat([SiteLon, SiteLat]));
     }
     if (usp.has('lockDotCentered')) {
         lockDotCentered = true;
-        OLMap.getView().setCenter(ol.proj.fromLonLat([SiteLon, SiteLat]));
+        OLMap.getView().setCenter(olProj.fromLonLat([SiteLon, SiteLat]));
     }
 }
 
@@ -5740,25 +5764,25 @@ function trailReaper() {
 
 function setIndexDistance(index, center, coords) {
     if (index >= 1000) {
-        globeIndexDist[index] = ol.sphere.getDistance(center, coords);
+        globeIndexDist[index] = olSphere.getDistance(center, coords);
         return;
     }
     let tile = globeIndexSpecialTiles[index];
-    let min = ol.sphere.getDistance(center, [tile[1], tile[0]]);
-    min = Math.min(min, ol.sphere.getDistance(center, [tile[1], tile[2]]));
-    min = Math.min(min, ol.sphere.getDistance(center, [tile[3], tile[0]]));
-    min = Math.min(min, ol.sphere.getDistance(center, [tile[3], tile[2]]));
+    let min = olSphere.getDistance(center, [tile[1], tile[0]]);
+    min = Math.min(min, olSphere.getDistance(center, [tile[1], tile[2]]));
+    min = Math.min(min, olSphere.getDistance(center, [tile[3], tile[0]]));
+    min = Math.min(min, olSphere.getDistance(center, [tile[3], tile[2]]));
     globeIndexDist[index] = min;
 }
 
 function globeIndexes() {
-    const center = ol.proj.toLonLat(OLMap.getView().getCenter());
+    const center = olProj.toLonLat(OLMap.getView().getCenter());
     if (mapIsVisible || lastGlobeExtent == null) {
         lastGlobeExtent = getViewOversize(1.02);
     }
     let extent = lastGlobeExtent.extent;
-    const bottomLeft = ol.proj.toLonLat([extent[0], extent[1]]);
-    const topRight = ol.proj.toLonLat([extent[2], extent[3]]);
+    const bottomLeft = olProj.toLonLat([extent[0], extent[1]]);
+    const topRight = olProj.toLonLat([extent[2], extent[3]]);
     let x1 = bottomLeft[0];
     let y1 = bottomLeft[1];
     let x2 = topRight[0];
@@ -5848,8 +5872,8 @@ function globe_index(lat, lon) {
 }
 
 function myExtent(extent) {
-    let bottomLeft = ol.proj.toLonLat([extent[0], extent[1]]);
-    let topRight = ol.proj.toLonLat([extent[2], extent[3]]);
+    let bottomLeft = olProj.toLonLat([extent[0], extent[1]]);
+    let topRight = olProj.toLonLat([extent[2], extent[3]]);
     return {
         extent: extent,
         minLon: bottomLeft[0],
@@ -5873,7 +5897,7 @@ function inView(pos, ex) {
     //console.log((currExtent[2]-currExtent[0])/40075016);
     //console.log([bottomLeft[0], topRight[0]]);
     //console.log([bottomLeft[1], topRight[1]]);
-    //const proj = ol.proj.fromLonLat(pos);
+    //const proj = olProj.fromLonLat(pos);
     if (lat < ex.minLat || lat > ex.maxLat)
         return false;
 
@@ -6273,54 +6297,54 @@ function shiftTrace(offset) {
 function setLineWidth() {
     newWidth = lineWidth * Math.pow(2, globalScale) / 2 * globalScale
 
-    estimateStyle = new ol.style.Style({
-        stroke: new ol.style.Stroke({
+    estimateStyle = new Style({
+        stroke: new Stroke({
             color: '#808080',
             width: 1.2 * newWidth,
         })
     });
-    estimateStyleSlim = new ol.style.Style({
-        stroke: new ol.style.Stroke({
+    estimateStyleSlim = new Style({
+        stroke: new Stroke({
             color: '#808080',
             width: 0.4 * newWidth,
         })
     });
 
-    badLine =  new ol.style.Style({
-        stroke: new ol.style.Stroke({
+    badLine =  new Style({
+        stroke: new Stroke({
             color: '#FF0000',
             width: 2 * newWidth,
         })
     });
-    badLineMlat =  new ol.style.Style({
-        stroke: new ol.style.Stroke({
+    badLineMlat =  new Style({
+        stroke: new Stroke({
             color: '#FFA500',
             width: 2 * newWidth,
         })
     });
 
-    badDot = new ol.style.Style({
-        image: new ol.style.Circle({
+    badDot = new Style({
+        image: new CircleStyle({
             radius: 3.5 * newWidth,
-            fill: new ol.style.Fill({
+            fill: new Fill({
                 color: '#FF0000',
             })
         }),
     });
-    badDotMlat = new ol.style.Style({
-        image: new ol.style.Circle({
+    badDotMlat = new Style({
+        image: new CircleStyle({
             radius: 3.5 * newWidth,
-            fill: new ol.style.Fill({
+            fill: new Fill({
                 color: '#FFA500',
             })
         }),
     });
 
-    labelFill = new ol.style.Fill({color: 'white' });
-    blackFill = new ol.style.Fill({color: 'black' });
-    labelStroke = new ol.style.Stroke({color: 'rgba(0,0,0,0.7', width: 4 * globalScale});
-    labelStrokeNarrow = new ol.style.Stroke({color: 'rgba(0,0,0,0.7', width: 2.5 * globalScale});
-    bgFill = new ol.style.Stroke({color: 'rgba(0,0,0,0.25'});
+    labelFill = new Fill({color: 'white' });
+    blackFill = new Fill({color: 'black' });
+    labelStroke = new Stroke({color: 'rgba(0,0,0,0.7', width: 4 * globalScale});
+    labelStrokeNarrow = new Stroke({color: 'rgba(0,0,0,0.7', width: 2.5 * globalScale});
+    bgFill = new Stroke({color: 'rgba(0,0,0,0.25'});
 }
 let lastCallLocationChange = 0;
 function onLocationChange(position) {
@@ -6335,7 +6359,7 @@ function onLocationChange(position) {
     createLocationDot();
 
     if (moveMap || lockDotCentered) {
-        OLMap.getView().setCenter(ol.proj.fromLonLat([SiteLon, SiteLat]));
+        OLMap.getView().setCenter(olProj.fromLonLat([SiteLon, SiteLat]));
     }
     console.log('Changed Site Location to: '+ SiteLat +', ' + SiteLon);
     //followRandomPlane();
@@ -6407,7 +6431,7 @@ function geoFindMe() {
         SiteLat = DefaultCenterLat = position.coords.latitude;
         SiteLon = DefaultCenterLon = position.coords.longitude;
         if (loStore['geoFindMeFirstVisit'] != 'no' && !(usp.has("lat") && usp.has("lon"))) {
-            OLMap.getView().setCenter(ol.proj.fromLonLat([SiteLon, SiteLat]));
+            OLMap.getView().setCenter(olProj.fromLonLat([SiteLon, SiteLat]));
             loStore['geoFindMeFirstVisit'] = 'no';
             siteCircleLayer.setVisible(true);
         }
@@ -6506,18 +6530,18 @@ function remakeTrails() {
 
 function createLocationDot() {
     locationDotFeatures.clear();
-    let markerStyle = new ol.style.Style({
-        image: new ol.style.Circle({
+    let markerStyle = new Style({
+        image: new CircleStyle({
             radius: 7,
             snapToPixel: false,
-            fill: new ol.style.Fill({color: 'black'}),
-            stroke: new ol.style.Stroke({
+            fill: new Fill({color: 'black'}),
+            stroke: new Stroke({
                 color: 'white', width: 2
             })
         })
     });
 
-    let feature = new ol.Feature(new ol.geom.Point(ol.proj.fromLonLat(SitePosition)));
+    let feature = new ol.Feature(new Point(olProj.fromLonLat(SitePosition)));
     feature.setStyle(markerStyle);
     locationDotFeatures.addFeature(feature);
 }
@@ -6545,16 +6569,16 @@ function drawSiteCircle() {
         circle.transform('EPSG:4326', 'EPSG:3857');
         let feature = new ol.Feature(circle);
 
-        let circleStyle = new ol.style.Style({
+        let circleStyle = new Style({
             fill: null,
-            stroke: new ol.style.Stroke({
+            stroke: new Stroke({
                 color: circleColor,
                 lineDash: SiteCirclesLineDash,
                 width: globalScale,
             }),
-            text: new ol.style.Text({
+            text: new Text({
                 font: ((10 * globalScale) + 'px Helvetica Neue, Helvetica, Tahoma, Verdana, sans-serif'),
-                fill: new ol.style.Fill({ color: '#000' }),
+                fill: new Fill({ color: '#000' }),
                 offsetY: -8,
                 text: format_distance_long(distance, DisplayUnits, 0),
             })
@@ -6565,7 +6589,7 @@ function drawSiteCircle() {
     }
 }
 
-let calcOutlineFeatures = new ol.source.Vector();
+let calcOutlineFeatures = new VectorSource();
 let calcOutlineLayer;
 function drawUpintheair() {
     // Add terrain-limit rings. To enable this:
@@ -6595,16 +6619,16 @@ function drawUpintheair() {
             let colorArr = altitudeColor(altitude);
             color = 'hsla(' + colorArr[0].toFixed(0) + ',' + colorArr[1].toFixed(0) + '%,' + colorArr[2].toFixed(0) + '%,' + range_outline_alpha + ')';
         }
-        let outlineStyle = new ol.style.Style({
+        let outlineStyle = new Style({
             fill: null,
-            stroke: new ol.style.Stroke({
+            stroke: new Stroke({
                 color: color,
                 width: range_outline_width,
                 lineDash: range_outline_dash,
             })
         });
         if (points.length > 0) {
-            geom = new ol.geom.LineString([[ points[0][1], points[0][0] ]]);
+            geom = new LineString([[ points[0][1], points[0][0] ]]);
             for (let j = 0; j < points.length; ++j) {
                 geom.appendCoordinate([ points[j][1], points[j][0] ]);
             }
@@ -6643,9 +6667,9 @@ function drawOutlineJson() {
             const k = j % points.length;
             const lat = points[k][0];
             const lon = points[k][1];
-            const proj = ol.proj.fromLonLat([lon, lat]);
+            const proj = olProj.fromLonLat([lon, lat]);
             if (!geom || (lastLon && Math.abs(lon - lastLon) > 270)) {
-                geom = new ol.geom.LineString([proj]);
+                geom = new LineString([proj]);
                 actualOutlineFeatures.addFeature(new ol.Feature(geom));
             } else {
                 geom.appendCoordinate(proj);
@@ -6873,8 +6897,8 @@ function initHeatmap() {
     heatmap.init = false;
     if (heatFeatures.length == 0) {
         for (let i = 0; i < heatFeaturesSpread; i++) {
-            heatFeatures.push(new ol.source.Vector());
-            heatLayers.push(new ol.layer.Vector({
+            heatFeatures.push(new VectorSource());
+            heatLayers.push(new Vector({
                 name: ('heatLayer' + i),
                 isTrail: true,
                 source: heatFeatures[i],
@@ -6886,7 +6910,7 @@ function initHeatmap() {
             trailGroup.push(heatLayers[i]);
         }
     }
-    realHeat = new ol.layer.Heatmap({
+    realHeat = new Heatmap({
         source: realHeatFeatures,
         name: realHeat,
         isTrail: true,
@@ -7061,7 +7085,7 @@ function drawHeatmap() {
                 //console.log(pos);
 
                 alt = calcAltitudeRounded(alt);
-                let projHere = ol.proj.fromLonLat(pos);
+                let projHere = olProj.fromLonLat(pos);
                 let style = lineStyleCache[alt];
                 let hsl = altitudeColor(alt);
                 hsl[1] = hsl[1] * 0.85;
@@ -7073,10 +7097,10 @@ function drawHeatmap() {
                     else
                         col = hslToRgb(hsl, heatmap.alpha);
 
-                    style = new ol.style.Style({
-                        image: new ol.style.Circle({
+                    style = new Style({
+                        image: new CircleStyle({
                             radius: heatmap.radius * globalScale,
-                            fill: new ol.style.Fill({
+                            fill: new Fill({
                                 color: col,
                             }),
                         }),
@@ -7084,7 +7108,7 @@ function drawHeatmap() {
                     });
                     lineStyleCache[alt] = style;
                 }
-                let feat = new ol.Feature(new ol.geom.Point(projHere));
+                let feat = new ol.Feature(new Point(projHere));
                 if (webgl) {
                     let rgb = hslToRgb(hsl, 'array');
                     feat.set('r', rgb[0]);
@@ -7575,28 +7599,28 @@ function active() {
 }
 
 function drawTileBorder(data) {
-    let southWest = ol.proj.fromLonLat([data.west, data.south]);
-    let south180p = ol.proj.fromLonLat([180, data.south]);
-    let south180m = ol.proj.fromLonLat([-180, data.south]);
-    let southEast = ol.proj.fromLonLat([data.east, data.south]);
-    let northEast = ol.proj.fromLonLat([data.east, data.north]);
-    let north180p = ol.proj.fromLonLat([180, data.north]);
-    let north180m = ol.proj.fromLonLat([-180, data.north]);
-    let northWest = ol.proj.fromLonLat([data.west, data.north]);
-    const estimateStyle = new ol.style.Style({
-        stroke: new ol.style.Stroke({
+    let southWest = olProj.fromLonLat([data.west, data.south]);
+    let south180p = olProj.fromLonLat([180, data.south]);
+    let south180m = olProj.fromLonLat([-180, data.south]);
+    let southEast = olProj.fromLonLat([data.east, data.south]);
+    let northEast = olProj.fromLonLat([data.east, data.north]);
+    let north180p = olProj.fromLonLat([180, data.north]);
+    let north180m = olProj.fromLonLat([-180, data.north]);
+    let northWest = olProj.fromLonLat([data.west, data.north]);
+    const estimateStyle = new Style({
+        stroke: new Stroke({
             color: '#303030',
             width: 1.5,
         })
     });
     if (data.west < data.east) {
-        let tile = new ol.geom.LineString([southWest, southEast, northEast, northWest, southWest]);
+        let tile = new LineString([southWest, southEast, northEast, northWest, southWest]);
         let tileFeature = new ol.Feature(tile);
         tileFeature.setStyle(estimateStyle);
         siteCircleFeatures.addFeature(tileFeature);
     } else {
-        let west = new ol.geom.LineString([south180p, southWest, northWest, north180p]);
-        let east = new ol.geom.LineString([south180m, southEast, northEast, north180m]);
+        let west = new LineString([south180p, southWest, northWest, north180p]);
+        let east = new LineString([south180m, southEast, northEast, north180m]);
         let westF = new ol.Feature(west);
         let eastF = new ol.Feature(east);
         westF.setStyle(estimateStyle);
@@ -7892,7 +7916,7 @@ function autoSelectClosest() {
         if (autoselectCoords && autoselectCoords.length == 2) {
             refLoc = [ autoselectCoords[1], autoselectCoords[0] ];
         }
-        const dist = ol.sphere.getDistance(refLoc, plane.position);
+        const dist = olSphere.getDistance(refLoc, plane.position);
         if (dist == null || isNaN(dist))
             continue;
         if (closestDistance == null || dist < closestDistance) {
